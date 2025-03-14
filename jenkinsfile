@@ -4,7 +4,6 @@ pipeline {
     environment {
         IMAGE_NAME = "flask-app"
         CONTAINER_NAME = "flask-container"
-        START_TIME = '' // Variable to store the start time
     }
 
     stages {
@@ -13,7 +12,7 @@ pipeline {
             steps {
                 script {
                     // Record the start time at the beginning of the build
-                    if (START_TIME == '') {
+                    if (!binding.hasVariable('START_TIME')) {
                         START_TIME = sh(script: 'date +%s', returnStdout: true).trim()
                     }
 
@@ -45,15 +44,20 @@ pipeline {
         always {
             script {
                 // Calculate the elapsed time and print it in the Jenkins log
-                def endTime = sh(script: 'date +%s', returnStdout: true).trim()
-                def elapsedTime = (endTime.toLong() - START_TIME.toLong()) // Time in seconds
-                echo "Elapsed Time: ${elapsedTime} seconds"
+                if (START_TIME) {
+                    def endTime = sh(script: 'date +%s', returnStdout: true).trim()
+                    def elapsedTime = (endTime.toLong() - START_TIME.toLong()) // Time in seconds
+                    echo "Elapsed Time: ${elapsedTime} seconds"
+                } else {
+                    echo "START_TIME not set, unable to calculate elapsed time."
+                }
             }
         }
 
         success {
             echo 'Deployment Successful!'
         }
+
         failure {
             echo 'Deployment Failed!'
         }
