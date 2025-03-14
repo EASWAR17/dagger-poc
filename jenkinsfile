@@ -4,38 +4,51 @@ pipeline {
     environment {
         IMAGE_NAME = "flask-app"
         CONTAINER_NAME = "flask-container"
+        START_TIME = '' // Variable to store the start time
     }
 
     stages {
-		
-		stage('Clean Existing Container and Image') {
-			steps {
-				script {
-					// Stop and remove the container if it exists
-					sh '''
-					docker ps -a | grep ${CONTAINER_NAME} && docker stop ${CONTAINER_NAME} && docker rm ${CONTAINER_NAME} || true
-					docker images | grep ${IMAGE_NAME} && docker rmi ${IMAGE_NAME}:latest || true
-					'''
-				}
-			}
-		}
+        
+        stage('Clean Existing Container and Image') {
+            steps {
+                script {
+                    // Record the start time at the beginning of the build
+                    if (START_TIME == '') {
+                        START_TIME = sh(script: 'date +%s', returnStdout: true).trim()
+                    }
 
-		stage('Build and Deploy') {
-			steps {
-				script {
-					sh '''
+                    // Stop and remove the container if it exists
+                    sh '''
+                    docker ps -a | grep ${CONTAINER_NAME} && docker stop ${CONTAINER_NAME} && docker rm ${CONTAINER_NAME} || true
+                    docker images | grep ${IMAGE_NAME} && docker rmi ${IMAGE_NAME}:latest || true
+                    '''
+                }
+            }
+        }
+
+        stage('Build and Deploy') {
+            steps {
+                script {
+                    sh '''
                         cd /home/easwar17/dagger-jenkins
                         echo "Current directory: $(pwd)"
                         ls -lah
                         '''
                     sh 'docker-compose -f /home/easwar17/dagger-jenkins/docker-compose.yml up --build -d'
-				}
-			}
-		}
+                }
+            }
+        }
 
     }
 
     post {
+        always {
+            // Calculate the elapsed time and print it in the Jenkins log
+            def endTime = sh(script: 'date +%s', returnStdout: true).trim()
+            def elapsedTime = (endTime.toLong() - START_TIME.toLong()) // Time in seconds
+            echo "Elapsed Time: ${elapsedTime} seconds"
+        }
+
         success {
             echo 'Deployment Successful!'
         }
