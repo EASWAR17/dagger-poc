@@ -43,10 +43,12 @@ pipeline {
 
     post {
         always {
-            // Calculate the elapsed time and print it in the Jenkins log
-            def endTime = sh(script: 'date +%s', returnStdout: true).trim()
-            def elapsedTime = (endTime.toLong() - START_TIME.toLong()) // Time in seconds
-            echo "Elapsed Time: ${elapsedTime} seconds"
+            script {
+                // Calculate the elapsed time and print it in the Jenkins log
+                def endTime = sh(script: 'date +%s', returnStdout: true).trim()
+                def elapsedTime = (endTime.toLong() - START_TIME.toLong()) // Time in seconds
+                echo "Elapsed Time: ${elapsedTime} seconds"
+            }
         }
 
         success {
